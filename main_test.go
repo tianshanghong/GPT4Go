@@ -16,10 +16,7 @@ import (
 
 func TestCreateTestFile(t *testing.T) {
 	tempDir := t.TempDir()
-	testCases := []struct {
-		Name string
-		Code string
-	}{
+	testCases := []testCase{
 		{
 			Name: "TestAdd",
 			Code: "func TestAdd(t *testing.T) { ... }",
@@ -75,7 +72,7 @@ func TestGenerateTestCases(t *testing.T) {
 	client := openai.NewClient(apiKey)
 
 	// Create the testdata directory if it doesn't exist
-	testdataDir := filepath.Join(".", "testdata")
+	testdataDir := filepath.Join(".", "__testdata")
 	if _, err := os.Stat(testdataDir); os.IsNotExist(err) {
 		err = os.MkdirAll(testdataDir, os.ModePerm)
 		if err != nil {
@@ -102,7 +99,7 @@ func main() {
 	if err != nil {
 		t.Fatalf("Error writing testdata file: %v\n", err)
 	}
-	defer os.Remove(path)
+	defer os.RemoveAll(testdataDir)
 
 	// Run the function and capture the output
 	old := os.Stdout
@@ -135,7 +132,69 @@ func TestChatGPTTestCases(t *testing.T) {
 	}
 	client := openai.NewClient(apiKey)
 
-	_, err := chatGPTTestCases(ctx, client, packageName, functionName, functionCode, openai.GPT3Dot5Turbo)
+	_, _, err := chatGPTTestCases(ctx, client, packageName, functionName, functionCode, openai.GPT3Dot5Turbo)
 
 	assert.NoError(t, err, "There should be no error")
+}
+
+// Test case for function sanitizeCode
+func TestSanitizeCode(t *testing.T) {
+	tests := []struct {
+		name                  string
+		rawCode               string
+		expectedCode          string
+		expectedImportContent string
+		expectedError         error
+	}{
+		{
+			name:                  "No code block",
+			rawCode:               "This is a sample text without a code block",
+			expectedCode:          "This is a sample text without a code block",
+			expectedImportContent: "",
+			expectedError:         nil,
+		},
+		{
+			name:                  "Code block without go",
+			rawCode:               "```\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```",
+			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
+			expectedImportContent: "",
+			expectedError:         nil,
+		},
+		{
+			name:                  "Code block with go",
+			rawCode:               "```go\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```",
+			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
+			expectedImportContent: "",
+			expectedError:         nil,
+		},
+		{
+			name:                  "Code block with package and import",
+			rawCode:               "```go\npackage main\n\nimport \"fmt\"\n\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```",
+			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
+			expectedImportContent: "import \"fmt\"",
+			expectedError:         nil,
+		},
+		{
+			name:                  "Multiple code blocks",
+			rawCode:               "```go\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```\n\nSome text\n\n```go\nfunc world() {\n\tfmt.Println(\"World, test!\")\n}\n```",
+			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
+			expectedImportContent: "",
+			expectedError:         nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			code, importContent, err := sanitizeCode(test.rawCode)
+			if code != test.expectedCode {
+				t.Errorf("Expected code: %s, got: %s", test.expectedCode, code)
+			}
+			if importContent != test.expectedImportContent {
+				t.Errorf("Expected importContent: %s, got: %s", test.expectedImportContent, importContent)
+			}
+			if err != test.expectedError {
+				t.Errorf("Expected error: %v, got: %v", test.expectedError, err)
+			}
+		})
+	}
 }
