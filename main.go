@@ -6,8 +6,10 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
 	"golang.org/x/tools/go/packages"
@@ -64,29 +66,46 @@ func generateTestCases(ctx context.Context, client *openai.Client, path string) 
 		return
 	}
 
-	var funcs []string
+	fileContent, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Printf("Error reading file: %v\n", err)
+		return
+	}
+	fileLines := strings.Split(string(fileContent), "\n")
+
+	var funcs []struct {
+		Name string
+		Code string
+	}
 	for _, decl := range parsedFile.Decls {
 		if funcDecl, ok := decl.(*ast.FuncDecl); ok {
 			if funcDecl.Recv == nil {
 				funcName := funcDecl.Name.Name
-				funcs = append(funcs, funcName)
+				startLine := fset.Position(funcDecl.Pos()).Line - 1
+				endLine := fset.Position(funcDecl.End()).Line - 1
+				funcCode := strings.Join(fileLines[startLine:endLine+1], "\n")
+				funcs = append(funcs, struct {
+					Name string
+					Code string
+				}{Name: funcName, Code: funcCode})
 			}
 		}
 	}
 
 	for _, fn := range funcs {
-		testCases, err := chatGPTTestCases(ctx, client, packageName, fn)
+		testCases, err := chatGPTTestCases(ctx, client, packageName, fn.Name, fn.Code)
 		if err != nil {
 			fmt.Printf("Error generating test cases: %v\n", err)
 			continue
 		}
 
-		fmt.Printf("Generated test cases for function %s:\n\n%s\n", fn, testCases)
+		// fmt.Printf("Generated test cases for function %s:\n\n%s\n\nTest cases:\n%s\n", fn.Name, fn.Code, testCases)
+		fmt.Printf("Generated test cases for function %s:\n\n%s\n", fn.Name, testCases)
 	}
 }
 
-func chatGPTTestCases(ctx context.Context, client *openai.Client, packageName, functionName string) (string, error) {
-	message := fmt.Sprintf("Please generate unit test code for a Golang function named %s in package %s. The returned value should be functional golang code.", functionName, packageName)
+func chatGPTTestCases(ctx context.Context, client *openai.Client, packageName, functionName, functionCode string) (string, error) {
+	message := fmt.Sprintf("Your task is to generate a runnable test case code for the provided code. Please ensure that the test case code is concise and effective in testing the functionality of the given code. Your response should only include the runnable test case code, without any unnecessary or redundant information. Additionally, please make sure that the test case code is properly formatted and follows best practices for testing.\nPlease generate unit test code for the following Golang function named %s in package %s:\n\n```go\n%s\n```\n", functionName, packageName, functionCode)
 	inputMessages := []openai.ChatCompletionMessage{
 		{Role: openai.ChatMessageRoleUser, Content: message},
 	}
