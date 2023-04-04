@@ -143,42 +143,56 @@ func TestSanitizeCode(t *testing.T) {
 		name                  string
 		rawCode               string
 		expectedCode          string
-		expectedImportContent string
+		expectedImportContent []string
 		expectedError         error
 	}{
 		{
 			name:                  "No code block",
 			rawCode:               "This is a sample text without a code block",
 			expectedCode:          "This is a sample text without a code block",
-			expectedImportContent: "",
+			expectedImportContent: nil,
 			expectedError:         nil,
 		},
 		{
 			name:                  "Code block without go",
 			rawCode:               "```\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```",
 			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
-			expectedImportContent: "",
+			expectedImportContent: nil,
 			expectedError:         nil,
 		},
 		{
 			name:                  "Code block with go",
 			rawCode:               "```go\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```",
 			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
-			expectedImportContent: "",
+			expectedImportContent: nil,
 			expectedError:         nil,
 		},
 		{
 			name:                  "Code block with package and import",
 			rawCode:               "```go\npackage main\n\nimport \"fmt\"\n\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```",
 			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
-			expectedImportContent: "import \"fmt\"",
+			expectedImportContent: []string{"fmt"},
 			expectedError:         nil,
 		},
 		{
 			name:                  "Multiple code blocks",
 			rawCode:               "```go\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```\n\nSome text\n\n```go\nfunc world() {\n\tfmt.Println(\"World, test!\")\n}\n```",
 			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
-			expectedImportContent: "",
+			expectedImportContent: nil,
+			expectedError:         nil,
+		},
+		{
+			name:                  "Multiple imports",
+			rawCode:               "package main\n\nimport (\n\t\"fmt\"\n\t\"os\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, world!\")\n}",
+			expectedCode:          "func main() {\n\tfmt.Println(\"Hello, world!\")\n}",
+			expectedImportContent: []string{"fmt", "os"},
+			expectedError:         nil,
+		},
+		{
+			name:                  "Single-line import with alias",
+			rawCode:               "package main\n\nimport f \"fmt\"\n\nfunc main() {\n\tf.Println(\"Hello, world!\")\n}",
+			expectedCode:          "func main() {\n\tf.Println(\"Hello, world!\")\n}",
+			expectedImportContent: []string{"fmt"},
 			expectedError:         nil,
 		},
 	}
@@ -189,7 +203,14 @@ func TestSanitizeCode(t *testing.T) {
 			if code != test.expectedCode {
 				t.Errorf("Expected code: %s, got: %s", test.expectedCode, code)
 			}
-			if importContent != test.expectedImportContent {
+			equal := true
+			for i, v := range importContent {
+				if v != test.expectedImportContent[i] {
+					equal = false
+					break
+				}
+			}
+			if equal != true {
 				t.Errorf("Expected importContent: %s, got: %s", test.expectedImportContent, importContent)
 			}
 			if err != test.expectedError {

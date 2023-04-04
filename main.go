@@ -54,9 +54,9 @@ func main() {
 }
 
 type testCase struct {
-	Name   string
-	Code   string
-	Import string
+	Name    string
+	Code    string
+	Imports []string
 }
 
 func createTestFile(path string, packageName string, testCases []testCase) error {
@@ -76,7 +76,26 @@ func createTestFile(path string, packageName string, testCases []testCase) error
 	} else {
 		// If the test file didn't exist, write the package and import statements
 		testFileContent.WriteString(fmt.Sprintf("package %s\n\n", packageName))
-		testFileContent.WriteString("import (\n\t\"testing\"\n)\n\n")
+		testFileContent.WriteString("import (\n\t\"testing\"\n")
+	}
+
+	// Collect all unique import statements
+	importSet := make(map[string]struct{})
+	for _, testCase := range testCases {
+		if testCase.Imports != nil {
+			for _, imp := range testCase.Imports {
+				importSet[imp] = struct{}{}
+			}
+		}
+	}
+
+	// Write unique import statements
+	for imp := range importSet {
+		testFileContent.WriteString(fmt.Sprintf("\t\"%s\"\n", imp))
+	}
+
+	if len(existingContent) == 0 {
+		testFileContent.WriteString(")\n\n")
 	}
 
 	for _, testCase := range testCases {
@@ -175,8 +194,8 @@ func generateTestCases(ctx context.Context, client *openai.Client, path string, 
 			continue
 		}
 
-		fmt.Printf("Generated test case for function %s:\n\n%s\n\nTest case code:\n%s\n", fn.Name, fn.Code, testCaseCode)
-		testCasesList = append(testCasesList, testCase{Name: fn.Name, Code: testCaseCode, Import: importContent})
+		fmt.Printf("Generated test case for function %s:\n\n%s\n\nTest case code:\n%s\n\nTest case import content:\n%s\n", fn.Name, fn.Code, testCaseCode, importContent)
+		testCasesList = append(testCasesList, testCase{Name: fn.Name, Code: testCaseCode, Imports: importContent})
 	}
 
 	err = createTestFile(path, packageName, testCasesList)
@@ -185,8 +204,8 @@ func generateTestCases(ctx context.Context, client *openai.Client, path string, 
 	}
 }
 
-func chatGPTTestCases(ctx context.Context, client *openai.Client, packageName, functionName, functionCode string, model string) (string, string, error) {
-	message := fmt.Sprintf("Your task is to generate a runnable test case code for the provided code. Please ensure that the test case covers all possible scenarios and edge cases, and that the code is easy to read and understand. Your response should only include the runnable code, without any package imports or markdown formatting syntax (e.g. ```). Additionally, please make sure that the test case is well-organized and follows best practices for testing.\n\nfunction named: %s\npackage name: %s\nfunction code:\n```go\n%s\n```\n", functionName, packageName, functionCode)
+func chatGPTTestCases(ctx context.Context, client *openai.Client, packageName, functionName, functionCode string, model string) (string, []string, error) {
+	message := fmt.Sprintf("Your task is to generate a runnable test case code for the provided code. Please ensure that the test case covers all possible scenarios and edge cases, and that the code is easy to read and understand. Your response should only include the runnable code. Do not return any original code. Additionally, please make sure that the test case is well-organized and follows best practices for testing.\n\nfunction named: %s\npackage name: %s\nfunction code:\n```go\n%s\n```\n", functionName, packageName, functionCode)
 	inputMessages := []openai.ChatCompletionMessage{
 		{Role: openai.ChatMessageRoleUser, Content: message},
 	}
@@ -198,41 +217,58 @@ func chatGPTTestCases(ctx context.Context, client *openai.Client, packageName, f
 	})
 
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 
 	response := chatCompletions.Choices[0].Message.Content
 
 	sanitizedCode, importContent, err := sanitizeCode(response)
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 
 	return sanitizedCode, importContent, nil
 }
 
-func sanitizeCode(rawCode string) (string, string, error) {
+func sanitizeCode(rawCode string) (string, []string, error) {
 	codePattern := "```(?:go)?\n((?s).*?)\n```"
 	codeRegex := regexp.MustCompile(codePattern)
 
 	codeMatches := codeRegex.FindStringSubmatch(rawCode)
+
+	code := ""
 	if len(codeMatches) < 2 {
-		return rawCode, "", nil
+		code = rawCode
+	} else {
+		code = codeMatches[1]
 	}
 
-	code := codeMatches[1]
-
 	// Extract package and import statements
-	packagePattern := "^package\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\n"
-	importPattern := "(?m)^import\\s+(?:\"[^\"]+\"|`[^`]+`|\\((?:.|\\s)*?\\))\\s*\n"
+	importContent := extractImports(code)
+
+	packagePattern := `^package\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\n`
+	// importPattern := "import\\s*\\(([^)]+)\\)\n"
+	importPattern := `(?m)^import(?:\s+\w+)?\s*(?:(?:\(\n(?:\s*\"[^"]+\"\s*\n)+\s*\))|(?:\"[^"]+\"))`
 
 	packageRegex := regexp.MustCompile(packagePattern)
 	importRegex := regexp.MustCompile(importPattern)
-
-	importContent := strings.TrimSpace(importRegex.FindString(code))
 
 	code = packageRegex.ReplaceAllString(code, "")
 	code = importRegex.ReplaceAllString(code, "")
 
 	return strings.TrimSpace(code), importContent, nil
+}
+
+func extractImports(sourceCode string) []string {
+	imports := []string{}
+
+	// Updated regex pattern to match individual import lines
+	importLineRegex := regexp.MustCompile(`(?m)^[\t ]*import\s*(?:\(|"|\t)([^\s")]+)(?:\)|"|\t)?`)
+	matches := importLineRegex.FindAllStringSubmatch(sourceCode, -1)
+
+	// Print the extracted import lines
+	for _, match := range matches {
+		imports = append(imports, match[1])
+	}
+	return imports
 }
