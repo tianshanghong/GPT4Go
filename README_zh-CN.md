@@ -3,6 +3,8 @@
 
 # 🤖 GPT4Go 🚀
 
+**GPT4Go：AI驱动的Golang测试用例生成 🧪**
+
 [English](README.md) | 中文
 
 </div>

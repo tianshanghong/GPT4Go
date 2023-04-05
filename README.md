@@ -3,6 +3,8 @@
 
 # 🤖 GPT4Go 🚀
 
+**GPT4Go: AI-Powered Test Case Generation for Golang 🧪**
+
 English | [中文](README_zh-CN.md)
 
 </div>
