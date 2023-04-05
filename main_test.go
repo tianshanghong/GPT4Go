@@ -219,3 +219,81 @@ func TestSanitizeCode(t *testing.T) {
 		})
 	}
 }
+
+// Test case for function extractImports
+func Test_extractImports(t *testing.T) {
+	tests := []struct {
+		name        string
+		importBlock string
+		wantImports []string
+	}{
+		{
+			name:        "Single line import",
+			importBlock: `import "fmt"`,
+			wantImports: []string{`"fmt"`},
+		},
+		{
+			name:        "Single line named import",
+			importBlock: `import openai "github.com/sashabaranov/go-openai"`,
+			wantImports: []string{`openai "github.com/sashabaranov/go-openai"`},
+		},
+		{
+			name: "Multi-line import",
+			importBlock: `
+		import (
+			"fmt"
+			"errors"
+		)
+		`,
+			wantImports: []string{`"fmt"`, `"errors"`},
+		},
+		{
+			name: "Multi-line import with extra spaces",
+			importBlock: `
+		import (
+			"fmt"
+			"errors"
+		)
+		`,
+			wantImports: []string{`"fmt"`, `"errors"`},
+		},
+		{
+			name: "Multi-line import with empty lines",
+			importBlock: `
+		import (
+
+			"fmt"
+
+			"errors"
+		)
+		`,
+			wantImports: []string{`"fmt"`, `"errors"`},
+		},
+		{
+			name:        "Empty import block",
+			importBlock: "",
+			wantImports: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotImports := extractImports(tt.importBlock); !equalSlices(gotImports, tt.wantImports) {
+				t.Errorf("extractImports() = %v, want %v", gotImports, tt.wantImports)
+			}
+		})
+	}
+}
+
+func equalSlices(s1, s2 []string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	for i, val := range s1 {
+		if val != s2[i] {
+			return false
+		}
+	}
+
+	return true
+}

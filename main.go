@@ -266,6 +266,11 @@ func sanitizeCode(rawCode string) (string, []string, error) {
 func extractImports(importBlock string) []string {
 	imports := []string{}
 
+	// empty import block
+	if importBlock == "" {
+		return imports
+	}
+
 	// count number of new lines
 	// if 1, then single line import
 	// if > 1, then multi-line import
