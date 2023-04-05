@@ -23,7 +23,7 @@ GPT4Go is an open-source project that auto-generates test case files for Golang 
 2.  Clone the repository 📦:
     
 ```bash
-git clone https://github.com/yourusername/GPT4Go.git
+git clone https://github.com/tianshanghong/GPT4Go.git
 ```
 
 3.  Change into the project directory 📂:
@@ -61,11 +61,11 @@ Please note that you will need an API key for OpenAI to use the ChatGPT function
 
 ## 👥 Contributing
 
-Contributions are welcome! Please feel free to submit pull requests 📥, report bugs 🐞, or suggest new features 💡 through the [GitHub issues](https://github.com/yourusername/GPT4Go/issues) page.
+Contributions are welcome! Please feel free to submit pull requests 📥, report bugs 🐞, or suggest new features 💡 through the [GitHub issues](https://github.com/tianshanghong/GPT4Go/issues) page.
 
 ## 📄 License
 
-GPT4Go is licensed under the [MIT License](https://chat.openai.com/LICENSE) 📃.
+GPT4Go is licensed under the [MIT License](LICENSE) 📃.
 
 ## 🙏 Acknowledgements
 

@@ -23,7 +23,7 @@ GPT4Go 是一个使用 OpenAI 的 ChatGPT 🌐 自动为 Golang 生成测试用�
 2.  克隆代码仓库 📦：
 
 ```bash
-git clone https://github.com/yourusername/GPT4Go.git
+git clone https://github.com/tianshanghong/GPT4Go.git
 ```
 
 3.  切换到项目目录 📂:
@@ -61,11 +61,11 @@ export GPT_MODEL=model_name  # (可选，默认为 gpt-3.5-turbo)
 
 ## 👥 贡献
 
-欢迎贡献！请随时提交拉取请求 📥，报告错误 🐞 或通过 [GitHub 问题](https://github.com/yourusername/GPT4Go/issues) 页面提出新功能建议 💡。
+欢迎贡献！请随时提交拉取请求 📥，报告错误 🐞 或通过 [GitHub 问题](https://github.com/tianshanghong/GPT4Go/issues) 页面提出新功能建议 💡。
 
 ## 📄 许可证
 
-GPT4Go 根据 [MIT 许可证](https://chat.openai.com/LICENSE) 授权 📃。
+GPT4Go 根据 [MIT 许可证](LICENSE)授权 📃。
 
 ## 🙏 鸣谢
 
