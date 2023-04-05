@@ -171,7 +171,7 @@ func TestSanitizeCode(t *testing.T) {
 			name:                  "Code block with package and import",
 			rawCode:               "```go\npackage main\n\nimport \"fmt\"\n\nfunc hello() {\n\tfmt.Println(\"Hello, test!\")\n}\n```",
 			expectedCode:          "func hello() {\n\tfmt.Println(\"Hello, test!\")\n}",
-			expectedImportContent: []string{"fmt"},
+			expectedImportContent: []string{"\"fmt\""},
 			expectedError:         nil,
 		},
 		{
@@ -185,14 +185,14 @@ func TestSanitizeCode(t *testing.T) {
 			name:                  "Multiple imports",
 			rawCode:               "package main\n\nimport (\n\t\"fmt\"\n\t\"os\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, world!\")\n}",
 			expectedCode:          "func main() {\n\tfmt.Println(\"Hello, world!\")\n}",
-			expectedImportContent: []string{"fmt", "os"},
+			expectedImportContent: []string{`"fmt"`, `"os"`},
 			expectedError:         nil,
 		},
 		{
 			name:                  "Single-line import with alias",
 			rawCode:               "package main\n\nimport f \"fmt\"\n\nfunc main() {\n\tf.Println(\"Hello, world!\")\n}",
 			expectedCode:          "func main() {\n\tf.Println(\"Hello, world!\")\n}",
-			expectedImportContent: []string{"fmt"},
+			expectedImportContent: []string{`f "fmt"`},
 			expectedError:         nil,
 		},
 	}
