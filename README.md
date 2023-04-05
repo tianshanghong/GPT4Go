@@ -47,7 +47,7 @@ export OPENAI_API_KEY=your_openai_api_key
 export GPT_MODEL=model_name  # (optional, defaults to gpt-3.5-turbo)
 ```
 
-From the [OpenAI website](https://beta.openai.com/docs/developer-quickstart/api-key), you can obtain an API key for OpenAI 🔑. You can also specify the model you want to use for generating test cases. The default model is `gpt-3.5-turbo`, which is the fastest model available 🏎, while `gpt-4` is the most accurate model 🎯. You can find a list of all available models [here](https://platform.openai.com/docs/models/overview).
+From the [OpenAI website](https://platform.openai.com/account/api-keys), you can obtain an API key for OpenAI 🔑. You can also specify the model you want to use for generating test cases. The default model is `gpt-3.5-turbo`, which is the fastest model available 🏎, while `gpt-4` is the most accurate model 🎯. You can find a list of all available models [here](https://platform.openai.com/docs/models/overview).
 
 ## 📚 Usage
 

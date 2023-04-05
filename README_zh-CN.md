@@ -47,7 +47,7 @@ export OPENAI_API_KEY=your_openai_api_key
 export GPT_MODEL=model_name  # (可选，默认为 gpt-3.5-turbo)
 ```
 
-在 [OpenAI 网站](https://beta.openai.com/docs/developer-quickstart/api-key) 上，您可以获取 OpenAI 的 API 密钥 🔑。您还可以指定要用于生成测试用例的模型。默认模型是 `gpt-3.5-turbo`，这是最快的模型 🏎，而 `gpt-4` 是最准确的模型 🎯。您可以在[这里](https://platform.openai.com/docs/models/overview)找到所有可用模型的列表。
+在 [OpenAI 网站](https://platform.openai.com/account/api-keys) 上，您可以获取 OpenAI 的 API 密钥 🔑。您还可以指定要用于生成测试用例的模型。默认模型是 `gpt-3.5-turbo`，这是最快的模型 🏎，而 `gpt-4` 是最准确的模型 🎯。您可以在[这里](https://platform.openai.com/docs/models/overview)找到所有可用模型的列表。
 
 ## 📚 使用方法
 
