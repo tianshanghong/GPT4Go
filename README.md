@@ -20,20 +20,28 @@ GPT4Go is an open-source project that auto-generates test case files for Golang 
     
 2.  Clone the repository 📦:
     
-
-`git clone https://github.com/yourusername/GPT4Go.git`
+```bash
+git clone https://github.com/yourusername/GPT4Go.git
+```
 
 3.  Change into the project directory 📂:
 
-`cd GPT4Go`
+```bash
+cd GPT4Go
+```
 
 4.  Build the project 🔨:
 
-`go build .`
+```bash
+go build .
+```
 
 5.  Set the required environment variables 🌍:
 
-`export OPENAI_API_KEY=your_openai_api_key export GPT_MODEL=model_name (optional, defaults to gpt-3.5-turbo)`
+```bash
+export OPENAI_API_KEY=your_openai_api_key
+export GPT_MODEL=model_name (optional, defaults to gpt-3.5-turbo)
+```
 
 From the [OpenAI website](https://beta.openai.com/docs/developer-quickstart/api-key), you can obtain an API key for OpenAI 🔑. You can also specify the model you want to use for generating test cases. The default model is `gpt-3.5-turbo`, which is the fastest model available 🏎, while `gpt-4` is the most accurate model 🎯. You can find a list of all available models [here](https://platform.openai.com/docs/models/overview).
 
@@ -41,7 +49,9 @@ From the [OpenAI website](https://beta.openai.com/docs/developer-quickstart/api-
 
 To generate test cases for a specific directory or file, run the following command:
 
-`./GPT4Go path/to/your/target/directory/or/file`
+```bash
+./GPT4Go path/to/your/target/directory/or/file
+```
 
 This command will walk through the specified directory or file and generate test cases for all functions that do not have corresponding test cases in the `_test.go` file.
 
