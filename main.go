@@ -70,15 +70,6 @@ func createTestFile(path string, packageName string, testCases []testCase) error
 
 	var testFileContent strings.Builder
 
-	// Write the existing content to the testFileContent
-	if len(existingContent) > 0 {
-		testFileContent.Write(existingContent)
-	} else {
-		// If the test file didn't exist, write the package and import statements
-		testFileContent.WriteString(fmt.Sprintf("package %s\n\n", packageName))
-		testFileContent.WriteString("import (\n\t\"testing\"\n")
-	}
-
 	// Collect all unique import statements
 	importSet := make(map[string]struct{})
 	for _, testCase := range testCases {
@@ -89,12 +80,38 @@ func createTestFile(path string, packageName string, testCases []testCase) error
 		}
 	}
 
-	// Write unique import statements
-	for imp := range importSet {
-		testFileContent.WriteString(fmt.Sprintf("\t%s\n", imp))
-	}
+	// Write the existing content to the testFileContent
+	if len(existingContent) > 0 {
+		testFileContent.Write(existingContent)
 
-	if len(existingContent) == 0 {
+		// Find the import block
+		importBlock := findImportBlock(testFileContent.String())
+		if importBlock == "" {
+			return fmt.Errorf("import block not found in %s", testFileName)
+		}
+
+		// Insert new import names into the import block
+		newImportBlock := importBlock
+		for imp := range importSet {
+			if !strings.Contains(importBlock, imp) {
+				newImportBlock = strings.Replace(newImportBlock, ")", fmt.Sprintf("\t%s\n)", imp), 1)
+			}
+		}
+
+		// Replace the old import block with the updated one
+		testFileContent.Reset()
+		testFileContent.WriteString(strings.Replace(string(existingContent), importBlock, newImportBlock, 1))
+
+	} else {
+		// If the test file didn't exist, write the package and import statements
+		testFileContent.WriteString(fmt.Sprintf("package %s\n\n", packageName))
+		testFileContent.WriteString("import (\n\t\"testing\"\n")
+
+		// Write unique import statements
+		for imp := range importSet {
+			testFileContent.WriteString(fmt.Sprintf("\t%s\n", imp))
+		}
+
 		testFileContent.WriteString(")\n\n")
 	}
 
@@ -246,21 +263,28 @@ func sanitizeCode(rawCode string) (string, []string, error) {
 	// Extract package and import statements
 
 	packagePattern := `^package\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\n`
-	// importPattern := "import\\s*\\(([^)]+)\\)\n"
-	importPattern := `(?m)^import(?:\s+\w+)?\s*(?:(?:\(\n(?:(\s*(?:\w+ )?\"[^"]+\"\s*\n))+\s*\))|(?:\"[^"]+\"))`
-
 	packageRegex := regexp.MustCompile(packagePattern)
 	code = packageRegex.ReplaceAllString(code, "")
 
-	importRegex := regexp.MustCompile(importPattern)
-	impotMatches := importRegex.FindStringSubmatch(code)
 	var importContent []string
-	if len(impotMatches) >= 2 {
-		importBlock := impotMatches[0]
+
+	importBlock := findImportBlock(code)
+	if importBlock != "" {
 		code = strings.TrimSpace(strings.Replace(code, importBlock, "", 1))
 		importContent = extractImports(importBlock)
 	}
+
 	return strings.TrimSpace(code), importContent, nil
+}
+
+func findImportBlock(code string) string {
+	importPattern := `(?m)^import(?:\s+\w+)?\s*(?:(?:\(\n(?:(\s*(?:\w+ )?\"[^"]+\"\s*\n))+\s*\))|(?:\"[^"]+\"))`
+	importRegex := regexp.MustCompile(importPattern)
+	impotMatches := importRegex.FindStringSubmatch(code)
+	if len(impotMatches) >= 2 {
+		return impotMatches[0]
+	}
+	return ""
 }
 
 func extractImports(importBlock string) []string {

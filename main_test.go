@@ -8,12 +8,13 @@ import (
 	"strings"
 	"testing"
 
+	"fmt"
+
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/stretchr/testify/assert"
 )
 
 // Test case for function createTestFile
-
 func TestCreateTestFile(t *testing.T) {
 	tempDir := t.TempDir()
 	testCases := []testCase{
@@ -221,7 +222,7 @@ func TestSanitizeCode(t *testing.T) {
 }
 
 // Test case for function extractImports
-func Test_extractImports(t *testing.T) {
+func TestExtractImports(t *testing.T) {
 	tests := []struct {
 		name        string
 		importBlock string
@@ -296,4 +297,56 @@ func equalSlices(s1, s2 []string) bool {
 	}
 
 	return true
+}
+
+// Test case for function findImportBlock
+func TestFindImportBlock(t *testing.T) {
+	testCases := []struct {
+		code     string
+		expected string
+	}{
+		{
+			code: `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello, world!")
+}`,
+			expected: `import "fmt"`,
+		},
+		{
+			code: `package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	fmt.Println("Hello, world!")
+}`,
+			expected: `import (
+	"fmt"
+	"os"
+)`,
+		},
+		{
+			code: `package main
+
+func main() {
+	fmt.Println("Hello, world!")
+}`,
+			expected: "",
+		},
+	}
+
+	for i, testCase := range testCases {
+		t.Run(fmt.Sprintf("Test Case %d", i+1), func(t *testing.T) {
+			result := findImportBlock(testCase.code)
+			if result != testCase.expected {
+				t.Errorf("Expected: %s, got: %s", testCase.expected, result)
+			}
+		})
+	}
 }
