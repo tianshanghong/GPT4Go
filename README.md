@@ -3,6 +3,8 @@
 
 # 🤖 GPT4Go 🚀
 
+English | [中文](README_zh-CN.md)
+
 </div>
 
 GPT4Go is an open-source project that auto-generates test case files for Golang using OpenAI's ChatGPT 🌐. The project helps developers quickly create test cases for their functions, ensuring that their code is tested efficiently and comprehensively 🧪.
@@ -40,7 +42,7 @@ go build .
 
 ```bash
 export OPENAI_API_KEY=your_openai_api_key
-export GPT_MODEL=model_name (optional, defaults to gpt-3.5-turbo)
+export GPT_MODEL=model_name  # (optional, defaults to gpt-3.5-turbo)
 ```
 
 From the [OpenAI website](https://beta.openai.com/docs/developer-quickstart/api-key), you can obtain an API key for OpenAI 🔑. You can also specify the model you want to use for generating test cases. The default model is `gpt-3.5-turbo`, which is the fastest model available 🏎, while `gpt-4` is the most accurate model 🎯. You can find a list of all available models [here](https://platform.openai.com/docs/models/overview).
